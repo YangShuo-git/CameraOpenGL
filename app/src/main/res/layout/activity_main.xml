@@ -6,10 +6,10 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-<!--这个直接和CameraView类对应上了，需要调查一下-->
-<!--    <com.example.nativedemo.CameraView-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="match_parent" />-->
+<!--这个直接和CameraView类对应上了-->
+    <com.example.nativedemo.CameraView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
     
     <android.opengl.GLSurfaceView
         android:id="@+id/glsurfaceview"
