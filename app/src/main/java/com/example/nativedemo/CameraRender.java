@@ -28,9 +28,9 @@ public class CameraRender implements GLSurfaceView.Renderer, Preview.OnPreviewOu
     // 监听画布创建完成
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        // 准备好摄像头绘制的画布; 通过gl创建一个纹理id
+        // 创建OpenGL纹理对象 textures
         textures = new int[1];
-        // 让 SurfaceTexture 与 Gpu（OpenGL）共享一个数据源  0-31  让摄像头的数据和Opengl的数据进行共享
+        // 将 CameraX 的 SurfaceTexture与 OpenGL 纹理关联起来，使得摄像头数据可以直接被 GPU 使用
         mCameraTexure.attachToGLContext(textures[0]);
         // 监听摄像头数据回调
         mCameraTexure.setOnFrameAvailableListener(this);
@@ -45,32 +45,42 @@ public class CameraRender implements GLSurfaceView.Renderer, Preview.OnPreviewOu
         screenFilter.setSize(width,height);
     }
 
-    // 渲染画画
+    // 渲染画画，不断地调用
     @Override
     public void onDrawFrame(GL10 gl) {
-        // 重新渲染 会调用该接口
-        //Log.i(TAG, "onDrawFrame 线程: " + Thread.currentThread().getName());
-        // 把摄像头的数据先输出来  更新纹理  SufaceTexture  给了GPU
+        // 重新渲染 会不断调用该接口
+        //Log.i(TAG, "onDrawFrame 线程: " + Thread.currentThread().getName());  //会一直打印
+        // 将最新的摄像头图像数据更新到之前关联的 OpenGL 纹理中，并设置变换矩阵
         mCameraTexure.updateTexImage();
-        // 获得变换矩阵
         mCameraTexure.getTransformMatrix(mtx);
-        screenFilter.setTransformMatrix(mtx);
 
+        // 传递变换矩阵和纹理 ID
+        screenFilter.setTransformMatrix(mtx);
         screenFilter.onDraw(textures[0]);
     }
 
     @Override
     public void onUpdated(Preview.PreviewOutput output) {
-        // 摄像头预览到的数据 在这里
+        // 获取来自 CameraX 的预览数据流（SurfaceTexture）
+        // 这是数据流的起点
+        Log.i(TAG, "PreviewOutput，onUpdated");
         mCameraTexure = output.getSurfaceTexture();
-        Log.i(TAG, "onUpdated: ");
     }
 
-    // 监听到有一个可用帧时
+    /*
+    每当摄像头有新的帧数据填入 SurfaceTexture，此回调就会被触发。
+    它手动调用 cameraView.requestRender()，驱动 OpenGL 渲染下一帧
+     */
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-        // 当有数据过来的时候 进行手动刷新 即当有一个可用帧时，就调用requestRender()
+        //Log.i(TAG, "onFrameAvailable"); //会不断打印
+        // 当有数据过来的时候 进行手动刷新RENDERMODE_WHEN_DIRTY； 即当有一个可用帧时，就调用requestRender()
         cameraView.requestRender();
-        //Log.i(TAG, "onFrameAvailable");
     }
 }
+
+/*
+onFrameAvailable是生产者（如相机）的通知，可能发生在任意线程;
+而 onDrawFrame是消费者（OpenGL）的操作，始终在专用的 GLThread中执行;
+通过 requestRender()连接它们，确保了线程安全.
+ */

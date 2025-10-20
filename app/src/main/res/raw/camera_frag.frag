@@ -1,11 +1,13 @@
 // 使用采样器，必须有此行
 #extension GL_OES_EGL_image_external : require
-// SurfaceTexture 比较特殊
-// 所有float类型数据的精度是lowp
+
+// 所有float类型数据的精度是lowp，但是SurfaceTexture 比较特殊
 precision mediump float;
 varying vec2 aCoord;
-// 采样器  uniform static
+
+// 这是一种采样器，用于访问 Android 通过 SurfaceTexture 提供的OES纹理（通常来自摄像头预览或视频解码器）
 uniform samplerExternalOES vTexture;
+
 void main(){
      // texture2D是Opengl自带的函数
      vec4 rgba = texture2D(vTexture, aCoord);

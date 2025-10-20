@@ -22,6 +22,8 @@ public class CameraHelper {
         handlerThread = new HandlerThread("Analyze-thread");
         handlerThread.start();
 
+        //将相机预览与传入的 LifecycleOwner（通常是一个 Activity或 Fragment）的生命周期绑定在一起。
+        // 这意味着当界面可见时相机自动开启，界面销毁时相机自动释放，有效避免了资源泄漏
         CameraX.bindToLifecycle(lifecycleOwner, getPreView());
     }
     private Preview getPreView() {
@@ -32,7 +34,10 @@ public class CameraHelper {
                 .setLensFacing(frontFacing) //前置或者后置摄像头
                 .build();
 
+        // 设置preview
         Preview preview = new Preview(previewConfig);
+        // 会在预览就绪和输出更新时被调用
+        // 在回调方法中，可以从 PreviewOutput参数里获取到 SurfaceTexture，进而得到每一帧的预览图像数据，用于显示或进一步处理
         preview.setOnPreviewOutputUpdateListener(listener);
         return preview;
     }
