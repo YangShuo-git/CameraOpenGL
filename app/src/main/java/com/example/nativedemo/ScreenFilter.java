@@ -21,7 +21,7 @@ public class ScreenFilter {
     private float[] mtx;
     // gpu顶点缓冲区
     FloatBuffer vertexBuffer;   // 顶点坐标缓存区
-    FloatBuffer textureBuffer;  // 纹理坐标缓冲区
+    FloatBuffer textureBuffer;  // 纹理缓冲区
     // 世界坐标系
     float[] VERTEX = {
             -1.0f, -1.0f,
@@ -37,7 +37,7 @@ public class ScreenFilter {
             1.0f, 1.0f
     };
     public ScreenFilter(Context context) {
-        // 1.处理缓冲区 vertexBuffer和textureBuffer
+        // 1.处理缓冲区 vertexBuffer、textureBuffer
         vertexBuffer = ByteBuffer.allocateDirect(4 * 4 * 2).order(ByteOrder.nativeOrder()).asFloatBuffer();
         vertexBuffer.clear();
         vertexBuffer.put(VERTEX);
@@ -56,10 +56,10 @@ public class ScreenFilter {
         vPosition = GLES20.glGetAttribLocation(program, "vPosition");
         // 接收glsl中的纹理坐标，接收采样器采样图片的坐标
         vCoord = GLES20.glGetAttribLocation(program, "vCoord");
-        // 变换矩阵， 需要将原本的vCoord（01,11,00,10） 与矩阵相乘
+        // 变换矩阵， 需要将原本的vCoord（01,11,00,10）与该变换矩阵相乘
         vMatrix = GLES20.glGetUniformLocation(program, "vMatrix");
 
-        // 采样点的坐标
+        // 采样点
         vTexture = GLES20.glGetUniformLocation(program, "vTexture");
     }
     public void setSize(int width, int height) {
@@ -77,8 +77,8 @@ public class ScreenFilter {
          */
         // View 的大小
         GLES20.glViewport(0, 0, mWidth, mHeight);
-        // 使用之前处理好的 program
         GLES20.glUseProgram(program);
+
         // 从索引位0的地方读
         vertexBuffer.position(0);
         //  index 指定要修改的通用顶点属性的索引

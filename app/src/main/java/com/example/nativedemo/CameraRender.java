@@ -13,6 +13,7 @@ import javax.microedition.khronos.opengles.GL10;
 public class CameraRender implements GLSurfaceView.Renderer, Preview.OnPreviewOutputUpdateListener, SurfaceTexture.OnFrameAvailableListener {
     private static final String TAG = "CameraRender";
     private CameraHelper cameraHelper;
+    private Camera2Helper camera2Helper;
     private CameraView cameraView;
     private ScreenFilter screenFilter;
     private SurfaceTexture mCameraTexure;
@@ -23,6 +24,7 @@ public class CameraRender implements GLSurfaceView.Renderer, Preview.OnPreviewOu
         LifecycleOwner lifecycleOwner = (LifecycleOwner) cameraView.getContext();
         //  打开摄像头
         cameraHelper = new CameraHelper(lifecycleOwner, this);
+        camera2Helper = new Camera2Helper(cameraView.getContext(), lifecycleOwner, this);
     }
 
     // 监听画布创建完成
@@ -50,7 +52,7 @@ public class CameraRender implements GLSurfaceView.Renderer, Preview.OnPreviewOu
     public void onDrawFrame(GL10 gl) {
         // 重新渲染 会不断调用该接口
         //Log.i(TAG, "onDrawFrame 线程: " + Thread.currentThread().getName());  //会一直打印
-        // 将最新的摄像头图像数据更新到之前关联的 OpenGL 纹理中，并设置变换矩阵
+        // 将最新的摄像头图像数据更新到之前关联的OpenGL纹理中，并设置变换矩阵
         mCameraTexure.updateTexImage();
         mCameraTexure.getTransformMatrix(mtx);
 
@@ -80,7 +82,11 @@ public class CameraRender implements GLSurfaceView.Renderer, Preview.OnPreviewOu
 }
 
 /*
-onFrameAvailable是生产者（如相机）的通知，可能发生在任意线程;
-而 onDrawFrame是消费者（OpenGL）的操作，始终在专用的 GLThread中执行;
-通过 requestRender()连接它们，确保了线程安全.
+将摄像头的preview给到surfacetexture；
+再将surfacetexture与opengl的纹理绑定一起；
+这样Gpu就可以渲染数据
+
+onFrameAvailable是生产者（如相机）的通知，可能发生在任意线程；
+    通过 requestRender()驱动opengl，确保了线程安全；
+onDrawFrame是消费者（OpenGL）的操作，始终在专用的 GLThread中执行；
  */
