@@ -13,7 +13,6 @@ import javax.microedition.khronos.opengles.GL10;
 public class CameraRender implements GLSurfaceView.Renderer, Preview.OnPreviewOutputUpdateListener, SurfaceTexture.OnFrameAvailableListener {
     private static final String TAG = "CameraRender";
     private CameraHelper cameraHelper;
-    private Camera2Helper camera2Helper;
     private CameraView cameraView;
     private ScreenFilter screenFilter;
     private SurfaceTexture mCameraTexure;
@@ -24,7 +23,6 @@ public class CameraRender implements GLSurfaceView.Renderer, Preview.OnPreviewOu
         LifecycleOwner lifecycleOwner = (LifecycleOwner) cameraView.getContext();
         //  打开摄像头
         cameraHelper = new CameraHelper(lifecycleOwner, this);
-        camera2Helper = new Camera2Helper(cameraView.getContext(), lifecycleOwner, this);
     }
 
     // 监听画布创建完成
