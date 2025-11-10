@@ -1,4 +1,4 @@
-package com.example.nativedemo;
+package com.example.cameraopengl;
 
 import org.junit.Test;
 

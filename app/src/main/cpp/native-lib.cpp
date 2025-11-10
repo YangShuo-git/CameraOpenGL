@@ -13,7 +13,7 @@ extern "C"  // 使用C的方式来编译代码
 JNIEXPORT   // 该方法可以被外部调用（不能少）
 jstring     // 返回值
 JNICALL     // 约束函数入栈顺序，和堆栈内存清理的规则（可以少）  // 包名+类名+方法名
-Java_com_example_nativedemo_MainActivity_stringFromJNI(JNIEnv* env, jobject /* this */) {
+Java_com_example_cameraopengl_MainActivity_stringFromJNI(JNIEnv* env, jobject /* this */) {
     std::string hello = "Hello from C++";
 
     Test test;
@@ -29,7 +29,7 @@ Java_com_example_nativedemo_MainActivity_stringFromJNI(JNIEnv* env, jobject /* t
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_example_nativedemo_MainActivity_stringGetJNI(JNIEnv* env, jobject /* this */) {
+Java_com_example_cameraopengl_MainActivity_stringGetJNI(JNIEnv* env, jobject /* this */) {
     std::string hello = "Hello from C++";
 
     return env->NewStringUTF(hello.c_str());
@@ -37,7 +37,7 @@ Java_com_example_nativedemo_MainActivity_stringGetJNI(JNIEnv* env, jobject /* th
 
 extern "C"
 JNIEXPORT jstring JNICALL
-Java_com_example_nativedemo_MainActivity_stringSetJNI(JNIEnv *env, jobject, jstring name) {
+Java_com_example_cameraopengl_MainActivity_stringSetJNI(JNIEnv *env, jobject, jstring name) {
     const char* str;
     str = env->GetStringUTFChars(name, NULL);
     if (!str){
@@ -50,7 +50,7 @@ Java_com_example_nativedemo_MainActivity_stringSetJNI(JNIEnv *env, jobject, jstr
 
 extern "C"
 JNIEXPORT jstring JNICALL
-Java_com_example_nativedemo_MainActivity_staticStringFromJNI(JNIEnv *env, jclass clazz) {
+Java_com_example_cameraopengl_MainActivity_staticStringFromJNI(JNIEnv *env, jclass clazz) {
     std::string hello = "Hello static function";
 
     // 从string到jstring
@@ -61,9 +61,9 @@ Java_com_example_nativedemo_MainActivity_staticStringFromJNI(JNIEnv *env, jclass
 // C++调用java的数据与方法，数据签名
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_nativedemo_MainActivity_changeName(JNIEnv *env, jobject thiz) {
+Java_com_example_cameraopengl_MainActivity_changeName(JNIEnv *env, jobject thiz) {
     jclass mainActivityClass = env->GetObjectClass(thiz);  // 方式1
-    // jclass mainActivityClass = env->FindClass("com/example/nativedemo/MainActivity");  // 方式2
+    // jclass mainActivityClass = env->FindClass("com/example/cameraopengl/MainActivity");  // 方式2
 
     jfieldID nameFid = env->GetFieldID(mainActivityClass, "name", "Ljava/lang/String;");
 
@@ -76,7 +76,7 @@ Java_com_example_nativedemo_MainActivity_changeName(JNIEnv *env, jobject thiz) {
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_nativedemo_MainActivity_changeAge(JNIEnv *env, jclass clazz) {
+Java_com_example_cameraopengl_MainActivity_changeAge(JNIEnv *env, jclass clazz) {
     jfieldID ageFid = env->GetStaticFieldID(clazz, "age", "I");
     int age = env->GetStaticIntField(clazz, ageFid);  // C++层获取之前的age
 
@@ -86,7 +86,7 @@ Java_com_example_nativedemo_MainActivity_changeAge(JNIEnv *env, jclass clazz) {
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_nativedemo_MainActivity_callAddMethod(JNIEnv *env, jobject thiz) {
+Java_com_example_cameraopengl_MainActivity_callAddMethod(JNIEnv *env, jobject thiz) {
     jclass mainActivityClass = env->GetObjectClass(thiz);
     jmethodID addMid = env->GetMethodID(mainActivityClass, "add", "(II)I");
 
@@ -96,7 +96,7 @@ Java_com_example_nativedemo_MainActivity_callAddMethod(JNIEnv *env, jobject thiz
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_nativedemo_MainActivity_callShowStringMethod(JNIEnv *env, jobject thiz) {
+Java_com_example_cameraopengl_MainActivity_callShowStringMethod(JNIEnv *env, jobject thiz) {
      jclass mainActivityClass = env->GetObjectClass(thiz);
      jmethodID showStringMid = env->GetMethodID(mainActivityClass, "showString", "(Ljava/lang/String;)Ljava/lang/String;");
 

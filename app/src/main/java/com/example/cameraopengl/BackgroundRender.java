@@ -1,4 +1,4 @@
-package com.example.nativedemo;
+package com.example.cameraopengl;
 
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;

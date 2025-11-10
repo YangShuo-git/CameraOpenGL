@@ -1,4 +1,4 @@
-package com.example.nativedemo;
+package com.example.cameraopengl;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -9,7 +9,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.nativedemo.databinding.ActivityMainBinding;
+import com.example.cameraopengl.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -18,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
 
     // 1. 加载so库.
     static {
-        System.loadLibrary("nativedemo");
+        System.loadLibrary("cameraopengl");
     }
 
     private ActivityMainBinding binding;
@@ -34,8 +34,6 @@ public class MainActivity extends AppCompatActivity {
     public static native void changeAge();
     public native void callAddMethod();
     public native void callShowStringMethod();
-
-//    public native void test();
 
     // 被C++调用的函数（需要签名，解决函数重载的问题） (II)I
     public int add(int num1, int num2){
@@ -57,7 +55,9 @@ public class MainActivity extends AppCompatActivity {
         checkPermission();
 
         //initView();
+    }
 
+    public void jniFunction() {
         // Example of a call to a native method
         TextView tv = binding.sampleText;
         tv.setText(stringFromJNI());

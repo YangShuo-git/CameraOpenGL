@@ -1,4 +1,4 @@
-package com.example.nativedemo;
+package com.example.cameraopengl;
 
 import android.graphics.SurfaceTexture;
 import android.opengl.GLSurfaceView;

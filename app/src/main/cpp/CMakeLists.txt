@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.22.1)
 
 # Declares and names the project.
 
-project("nativedemo")
+project("cameraopengl")
 
 # 指定动态库 nativedeme.so 的生成目录(其实也可以不用指定，因为会被编到APK中)
 #set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../jnilibs/${ANDROID_ABI})
@@ -18,7 +18,7 @@ project("nativedemo")
 # Gradle automatically packages shared libraries with your APK.
 
 add_library( # Sets the name of the library.
-        nativedemo
+        cameraopengl
 
         # Sets the library as a shared library.
         SHARED
@@ -46,7 +46,7 @@ find_library( # Sets the name of the path variable.
 # build script, prebuilt third-party libraries, or system libraries.
 
 target_link_libraries( # Specifies the target library.
-        nativedemo
+        cameraopengl
 
         # Links the target library to the log library
         # included in the NDK.

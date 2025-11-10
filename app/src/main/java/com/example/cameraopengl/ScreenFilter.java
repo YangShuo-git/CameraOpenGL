@@ -1,4 +1,4 @@
-package com.example.nativedemo;
+package com.example.cameraopengl;
 
 import static android.opengl.GLES20.GL_FLOAT;
 import static android.opengl.GLES20.GL_TEXTURE0;

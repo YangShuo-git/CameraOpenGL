@@ -3,17 +3,18 @@ plugins {
 }
 
 android {
-    namespace 'com.example.nativedemo'
+    namespace 'com.example.cameraopengl'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.nativedemo"
+        applicationId "com.example.cameraopengl"
         minSdk 21
         targetSdk 33
         versionCode 1
         versionName "1.0"
         // 生成指定cpu平台对应的so库文件
-        ndk.abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+//        ndk.abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+        ndk.abiFilters 'armeabi-v7a'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
