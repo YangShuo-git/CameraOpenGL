@@ -7,6 +7,7 @@ import android.util.AttributeSet;
 // GLSurfaceView   代码运行在 glthread线程
 public class CameraView extends GLSurfaceView {
     private  CameraRender renderer;
+    private  Camera2Render renderer2;
     public CameraView(Context context) {
         super(context);
     }
@@ -14,11 +15,12 @@ public class CameraView extends GLSurfaceView {
     public CameraView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        // 1.配置EGL的版本（必须设置）
+        // 1.配置EGL的版本
         setEGLContextClientVersion(2);
         // 2.设置渲染器
         renderer = new CameraRender(this);
-        setRenderer(renderer);
+        renderer2 = new Camera2Render(this);
+        setRenderer(renderer2);
         /**
          *  刷新方式：
          *  RENDERMODE_WHEN_DIRTY   手动刷新（按需），调用requestRender(); 效率高一点
