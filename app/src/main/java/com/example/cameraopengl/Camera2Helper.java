@@ -89,7 +89,6 @@ public class Camera2Helper {
 
     public void openCamera(int width, int height, SurfaceTexture mSurfaceTexture) throws CameraAccessException {
         this.mSurfaceTexture = mSurfaceTexture;
-
         startBackgroundThread();
 
         //设置预览图像的大小，surfaceview的大小。
@@ -101,6 +100,7 @@ public class Camera2Helper {
                     return;
                 }
             }
+            // 第一个参数指示打开哪个摄像头，第二个参数mStateCallback为相机的状态回调接口，第三个参数用来确定Callback在哪个线程执行，为null的话就在当前线程执行
             manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -124,19 +124,18 @@ public class Camera2Helper {
      */
     @SuppressWarnings("SuspiciousNameCombination")
     private void setUpCameraOutputs(int width, int height) {
-
         CameraManager manager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
         try {
             for (String cameraId : manager.getCameraIdList()) {
+                //获取此ID对应摄像头的参数
                 CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
-
-                // We don't use a front facing camera in this sample.
+                //默认打开后置摄像头
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
                 if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) {
                     continue;
                 }
-                StreamConfigurationMap map = characteristics.get(
-                        CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+                //获取StreamConfigurationMap，用来管理摄像头支持的所有输出格式和尺寸
+                StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                 if (map == null) {
                     continue;
                 }
@@ -170,7 +169,6 @@ public class Camera2Helper {
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (NullPointerException e) {
-
         }
     }
 
@@ -178,8 +176,6 @@ public class Camera2Helper {
      * {@link CameraDevice.StateCallback} is called when {@link CameraDevice} changes its state.
      */
     private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
-
-
         @Override
         public void onOpened(@NonNull CameraDevice cameraDevice) {
             // This method is called when the camera is opened.  We start camera preview here.
@@ -269,11 +265,8 @@ public class Camera2Helper {
      */
     private void createCameraPreviewSession() {
         try {
-
             // This is the output Surface we need to start preview.
-
             mSurfaceTexture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
-
             Surface surface = new Surface(mSurfaceTexture);
 
             // We set up a CaptureRequest.Builder with the output Surface.
@@ -415,8 +408,6 @@ public class Camera2Helper {
                 if (onPreviewListener != null) {
                     onPreviewListener.onPreviewFrame(i420, i420.length);
                 }
-
-
             }
             image.close();
         }

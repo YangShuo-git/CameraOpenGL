@@ -5,20 +5,21 @@ import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 
 // GLSurfaceView   代码运行在 glthread线程
-public class CameraView extends GLSurfaceView {
+public class CameraGLView extends GLSurfaceView {
     private  CameraRender renderer;
     private  Camera2Render renderer2;
-    public CameraView(Context context) {
+    private GLSurfaceView glSurfaceView;
+    public CameraGLView(Context context) {
         super(context);
     }
 
-    public CameraView(Context context, AttributeSet attrs) {
+    public CameraGLView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         // 1.配置EGL的版本
         setEGLContextClientVersion(2);
         // 2.设置渲染器
-        renderer = new CameraRender(this);
+        //renderer = new CameraRender(this);
         renderer2 = new Camera2Render(this);
         setRenderer(renderer2);
         /**

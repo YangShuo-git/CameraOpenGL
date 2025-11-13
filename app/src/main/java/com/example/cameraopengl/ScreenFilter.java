@@ -47,8 +47,8 @@ public class ScreenFilter {
         textureBuffer.put(TEXTURE);
 
         //  2.加载glsl中的vertexshader与fragmentshader，并load成一个program
-        String vertexSharder = OpenGLUtils.readRawTextFile(context, R.raw.camera_vert);  // 读取vertexshader为字符串
-        String fragSharder = OpenGLUtils.readRawTextFile(context, R.raw.camera_frag);    // 读取fragmentshader为字符串
+        String vertexSharder = OpenGLUtils.readRawShaderFile(context, R.raw.camera_vert);  // 读取vertexshader为字符串
+        String fragSharder = OpenGLUtils.readRawShaderFile(context, R.raw.camera_frag);    // 读取fragmentshader为字符串
         program = OpenGLUtils.loadProgram(vertexSharder, fragSharder);
 
         // 3.获取glsl中的各种变量的句柄

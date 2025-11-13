@@ -13,14 +13,14 @@ import javax.microedition.khronos.opengles.GL10;
 public class CameraRender implements GLSurfaceView.Renderer, Preview.OnPreviewOutputUpdateListener, SurfaceTexture.OnFrameAvailableListener {
     private static final String TAG = "CameraRender";
     private CameraHelper cameraHelper;
-    private CameraView cameraView;
+    private CameraGLView cameraGLView;
     private ScreenFilter screenFilter;
-    private SurfaceTexture mCameraTexure;
+    private SurfaceTexture mSurfaceTexture;
     private  int[] textures;
     float[] mtx = new float[16];
-    public CameraRender(CameraView cameraView) {
-        this.cameraView = cameraView;
-        LifecycleOwner lifecycleOwner = (LifecycleOwner) cameraView.getContext();
+    public CameraRender(CameraGLView cameraGLView) {
+        this.cameraGLView = cameraGLView;
+        LifecycleOwner lifecycleOwner = (LifecycleOwner) cameraGLView.getContext();
         //  打开摄像头
         cameraHelper = new CameraHelper(lifecycleOwner, this);
     }
@@ -31,12 +31,12 @@ public class CameraRender implements GLSurfaceView.Renderer, Preview.OnPreviewOu
         // 创建OpenGL纹理对象 textures
         textures = new int[1];
         // 将 CameraX 的 SurfaceTexture与 OpenGL 纹理关联起来，使得摄像头数据可以直接被 GPU 使用
-        mCameraTexure.attachToGLContext(textures[0]);
+        mSurfaceTexture.attachToGLContext(textures[0]);
         // 监听摄像头数据回调
-        mCameraTexure.setOnFrameAvailableListener(this);
+        mSurfaceTexture.setOnFrameAvailableListener(this);
 
         // 必须要在glThread中进行初始化
-        screenFilter = new ScreenFilter(cameraView.getContext());
+        screenFilter = new ScreenFilter(cameraGLView.getContext());
     }
 
     // 监听画布改变
@@ -51,8 +51,8 @@ public class CameraRender implements GLSurfaceView.Renderer, Preview.OnPreviewOu
         // 重新渲染 会不断调用该接口
         //Log.i(TAG, "onDrawFrame 线程: " + Thread.currentThread().getName());  //会一直打印
         // 将最新的摄像头图像数据更新到之前关联的OpenGL纹理中，并设置变换矩阵
-        mCameraTexure.updateTexImage();
-        mCameraTexure.getTransformMatrix(mtx);
+        mSurfaceTexture.updateTexImage();
+        mSurfaceTexture.getTransformMatrix(mtx);
 
         // 传递变换矩阵和纹理 ID
         screenFilter.setTransformMatrix(mtx);
@@ -64,18 +64,18 @@ public class CameraRender implements GLSurfaceView.Renderer, Preview.OnPreviewOu
         // 获取来自 CameraX 的预览数据流（SurfaceTexture）
         // 这是数据流的起点
         Log.i(TAG, "PreviewOutput，onUpdated");
-        mCameraTexure = output.getSurfaceTexture();
+        mSurfaceTexture = output.getSurfaceTexture();
     }
 
     /*
     每当摄像头有新的帧数据填入 SurfaceTexture，此回调就会被触发。
-    它手动调用 cameraView.requestRender()，驱动 OpenGL 渲染下一帧
+    它手动调用 cameraGLView.requestRender()，驱动 OpenGL 渲染下一帧
      */
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
         //Log.i(TAG, "onFrameAvailable"); //会不断打印
         // 当有数据过来的时候 进行手动刷新RENDERMODE_WHEN_DIRTY； 即当有一个可用帧时，就调用requestRender()
-        cameraView.requestRender();
+        cameraGLView.requestRender();
     }
 }
 

@@ -7,7 +7,7 @@
     tools:context=".MainActivity">
 
 <!--这个直接和CameraView类对应上了-->
-    <com.example.cameraopengl.CameraView
+    <com.example.cameraopengl.CameraGLView
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
     

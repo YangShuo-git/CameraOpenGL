@@ -2,16 +2,11 @@ package com.example.cameraopengl;
 
 
 import android.app.Activity;
-import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
-import android.opengl.EGL14;
-import android.opengl.EGLContext;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
-
-import androidx.lifecycle.LifecycleOwner;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -19,9 +14,10 @@ import javax.microedition.khronos.opengles.GL10;
 public class Camera2Render implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener, Camera2Helper.OnPreviewSizeListener, Camera2Helper.OnPreviewListener {
 
     private static final String TAG = "Camera2Render";
-    private CameraView mCameraView;
+    private CameraGLView mCameraGLView;
     private Camera2Helper mCamera2Helper;
-    private ScreenFilter screenFilter;
+    private Screen2Filter screenFilter;
+    private Camera2Filter cameraFilter;
     private SurfaceTexture mSurfaceTexture;
     private  int[] mTextures;
     float[] mtx = new float[16];
@@ -33,24 +29,24 @@ public class Camera2Render implements GLSurfaceView.Renderer, SurfaceTexture.OnF
     private int screenSurfaceHeight;
     private int screenX;
     private int screenY;
-    public Camera2Render(CameraView cameraView) {
-        mCameraView = cameraView;
-        //  打开摄像头
-        mCamera2Helper = new Camera2Helper((Activity) mCameraView.getContext());
+    public Camera2Render(CameraGLView cameraGLView) {
+        mCameraGLView = cameraGLView;
     }
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-
+        mCamera2Helper = new Camera2Helper((Activity) mCameraGLView.getContext());
         mTextures = new int[1];
         //创建一个纹理
         GLES20.glGenTextures(mTextures.length, mTextures, 0);
-        //将纹理和离屏buffer绑定
-        mSurfaceTexture = new SurfaceTexture(mTextures[0]);
 
+        mSurfaceTexture = new SurfaceTexture(mTextures[0]);
         mSurfaceTexture.setOnFrameAvailableListener(this);
 
-        screenFilter = new ScreenFilter(mCameraView.getContext());
+        //使用fbo 将samplerExternalOES 输入到sampler2D中
+        cameraFilter = new Camera2Filter(mCameraGLView.getContext());
+        //负责将图像绘制到屏幕上
+        screenFilter = new Screen2Filter(mCameraGLView.getContext());
     }
 
     @Override
@@ -76,10 +72,8 @@ public class Camera2Render implements GLSurfaceView.Renderer, SurfaceTexture.OnF
         screenY = height - (int) (mPreviewWdith / max);
 
         //prepare 传如 绘制到屏幕上的宽 高 起始点的X坐标 起使点的Y坐标
-        //cameraFilter.prepare(screenSurfaceWid, screenSurfaceHeight, screenX, screenY);
-        //screenFilter.prepare(screenSurfaceWid, screenSurfaceHeight, screenX, screenY);
-
-        EGLContext eglContext = EGL14.eglGetCurrentContext();
+        cameraFilter.prepare(screenSurfaceWid, screenSurfaceHeight, screenX, screenY);
+        screenFilter.prepare(screenSurfaceWid, screenSurfaceHeight, screenX, screenY);
     }
 
     @Override
@@ -96,14 +90,14 @@ public class Camera2Render implements GLSurfaceView.Renderer, SurfaceTexture.OnF
         mSurfaceTexture.getTransformMatrix(mtx);
 
         //cameraFiler需要一个矩阵，是Surface和我们手机屏幕的一个坐标之间的关系
-        screenFilter.setTransformMatrix(mtx);
-        screenFilter.onDraw(mTextures[0]);
+        cameraFilter.setMatrix(mtx);
+        textureId = cameraFilter.onDrawFrame(mTextures[0]);
+        screenFilter.onDrawFrame(textureId);
     }
-
 
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-        mCameraView.requestRender();
+        mCameraGLView.requestRender();
     }
 
     @Override
@@ -116,6 +110,5 @@ public class Camera2Render implements GLSurfaceView.Renderer, SurfaceTexture.OnF
 
     @Override
     public void onPreviewFrame(byte[] data, int len) {
-        //if (tracker != null && (stickEnable || bigEyeEnable)) tracker.detector(data);
     }
 }
