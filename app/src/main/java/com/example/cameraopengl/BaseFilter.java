@@ -9,7 +9,6 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 public class BaseFilter {
-
     private Context mContext;
     protected int mVertexShaderId;
     protected int mFragShaderId;
@@ -27,21 +26,13 @@ public class BaseFilter {
     protected int y;
     protected int x;
 
-    public BaseFilter(Context mContext, int mVertexShaderId, int mFragShaderId) {
-        this.mContext = mContext;
-        this.mVertexShaderId = mVertexShaderId;
-        this.mFragShaderId = mFragShaderId;
-
+    public BaseFilter(Context context, int vertexShaderId, int fragShaderId) {
+        mContext = context;
+        mVertexShaderId = vertexShaderId;
+        mFragShaderId = fragShaderId;
 
         mGlVertexBuffer = ByteBuffer.allocateDirect(4 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         mGlVertexBuffer.clear();
-
-//        float[] VERTEXT = {
-//                -1.0f, -1.0f,
-//                1.0f, -1.0f,
-//                -1.0f, 1.0f,
-//                1.0f, 1.0f
-//        };
 
         float[] VERTEXT = {
                 -1.0f, 1.0f,
@@ -49,19 +40,10 @@ public class BaseFilter {
                 -1.0f, -1.0f,
                 1.0f, -1.0f
         };
-
-
         mGlVertexBuffer.put(VERTEXT);
 
         mGlTextureBuffer = ByteBuffer.allocateDirect(4 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         mGlTextureBuffer.clear();
-
-//        float[] TEXTURE = {
-//                0.0f, 1.0f,
-//                1.0f, 1.0f,
-//                0.0f, 0.0f,
-//                1.0f, 0.0f,
-//        };
 
         float[] TEXTURE = {
                 0.0f, 0.0f,
@@ -69,18 +51,14 @@ public class BaseFilter {
                 0.0f, 1.0f,
                 1.0f, 1.0f,
         };
-
-
         mGlTextureBuffer.put(TEXTURE);
 
-        initilize(mContext);
+        init(mContext);
 
         resetCoordinate();
-
     }
 
-
-    private void initilize(Context mContext) {
+    private void init(Context mContext) {
         //读取着色器信息
         mVertexShader = OpenGLUtils.readRawShaderFile(mContext, mVertexShaderId);
         mFragShader = OpenGLUtils.readRawShaderFile(mContext, mFragShaderId);
@@ -122,8 +100,6 @@ public class BaseFilter {
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 
         return textureId;
-
-
     }
 
     public void release() {

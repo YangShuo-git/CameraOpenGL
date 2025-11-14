@@ -5,12 +5,11 @@ import android.content.Context;
 import android.opengl.GLES20;
 
 
-public class AbstractFBOFilter extends BaseFilter {
-
+public class BaseFBOFilter extends BaseFilter {
 
     protected int[] mFrameBuffers;
     protected int[] mFBOTextures;
-    public AbstractFBOFilter(Context mContext, int mVertexShaderId, int mFragShaderId) {
+    public BaseFBOFilter(Context mContext, int mVertexShaderId, int mFragShaderId) {
         super(mContext, mVertexShaderId, mFragShaderId);
     }
 
@@ -31,11 +30,9 @@ public class AbstractFBOFilter extends BaseFilter {
         super.prepare(width, height,x,y);
 
         loadFOB();
-
     }
 
     private void loadFOB() {
-
         if (mFrameBuffers != null) {
             destroyFrameBuffers();
         }
@@ -59,7 +56,6 @@ public class AbstractFBOFilter extends BaseFilter {
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-
     }
 
     public void destroyFrameBuffers() {

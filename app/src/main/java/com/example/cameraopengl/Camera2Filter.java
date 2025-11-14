@@ -5,8 +5,7 @@ import android.content.Context;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 
-public class Camera2Filter extends AbstractFBOFilter {
-
+public class Camera2Filter extends BaseFBOFilter {
 
     protected float[] matrix;
 
@@ -18,7 +17,6 @@ public class Camera2Filter extends AbstractFBOFilter {
         super(mContext, mVertexShaderId, mFragShaderId);
     }
 
-
     @Override
     protected void resetCoordinate() {
 //        mGlTextureBuffer.clear();
@@ -29,13 +27,10 @@ public class Camera2Filter extends AbstractFBOFilter {
 //                1.0f, 0.0f,
 //        };
 //        mGlTextureBuffer.put(TEXTURE);
-
-
     }
 
     @Override
     public int onDrawFrame(int textureId) {
-
         //锁定绘制的区域  绘制是从左下角开始的
         GLES20.glViewport(0, 0, mOutputWidth, mOutputHeight);
         //绑定FBO，在FBO上操作
