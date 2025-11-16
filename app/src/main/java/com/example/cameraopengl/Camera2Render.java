@@ -47,12 +47,13 @@ public class Camera2Render implements GLSurfaceView.Renderer, SurfaceTexture.OnF
         cameraFilter = new Camera2Filter(mCameraGLView.getContext());
         //负责将图像绘制到屏幕上
         screenFilter = new Screen2Filter(mCameraGLView.getContext());
+        Log.i(TAG, "onSurfaceCreated finished");
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        mCamera2Helper.setPreviewSizeListener(this);
         mCamera2Helper.setOnPreviewListener(this);
+        mCamera2Helper.setPreviewSizeListener(this);
 
         //打开相机
         try {
@@ -74,6 +75,7 @@ public class Camera2Render implements GLSurfaceView.Renderer, SurfaceTexture.OnF
         //prepare 传如 绘制到屏幕上的宽 高 起始点的X坐标 起使点的Y坐标
         cameraFilter.prepare(screenSurfaceWid, screenSurfaceHeight, screenX, screenY);
         screenFilter.prepare(screenSurfaceWid, screenSurfaceHeight, screenX, screenY);
+        Log.i(TAG, "onSurfaceChanged finished");
     }
 
     @Override
@@ -104,8 +106,8 @@ public class Camera2Render implements GLSurfaceView.Renderer, SurfaceTexture.OnF
     public void onSize(int width, int height) {
         mPreviewWdith = width;
         mPreviewHeight = height;
-        Log.e("AAA", "mPreviewWdith:" + mPreviewWdith);
-        Log.e("AAA", "mPreviewHeight:" + mPreviewHeight);
+        Log.i(TAG, "mPreviewWdith:" + mPreviewWdith);
+        Log.i(TAG, "mPreviewHeight:" + mPreviewHeight);
     }
 
     @Override
