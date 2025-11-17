@@ -55,7 +55,7 @@ public class Camera2Render implements GLSurfaceView.Renderer, SurfaceTexture.OnF
         mCamera2Helper.setOnPreviewListener(this);
         mCamera2Helper.setPreviewSizeListener(this);
 
-        //打开相机
+        //打开相机，传入SurfaceTexture，相机会将预览数据给到该SurfaceTexture
         try {
             mCamera2Helper.openCamera(width, height, mSurfaceTexture);
         } catch (CameraAccessException e) {
@@ -91,7 +91,7 @@ public class Camera2Render implements GLSurfaceView.Renderer, SurfaceTexture.OnF
         mSurfaceTexture.updateTexImage();
         mSurfaceTexture.getTransformMatrix(mtx);
 
-        //cameraFiler需要一个矩阵，是Surface和我们手机屏幕的一个坐标之间的关系
+        //cameraFiler需要一个矩阵，是SurfaceTexture和手机屏幕的一个坐标之间的关系
         cameraFilter.setMatrix(mtx);
         textureId = cameraFilter.onDrawFrame(mTextures[0]);
         screenFilter.onDrawFrame(textureId);

@@ -59,7 +59,7 @@ public class Camera2Helper {
 
     private Handler mBackgroundHandler;
 
-    private CameraCaptureSession mCaptureSession;
+    private CameraCaptureSession mCameraCaptureSession;
 
     private CaptureRequest mPreviewRequest;
 
@@ -206,9 +206,9 @@ public class Camera2Helper {
     private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
         @Override
         public void onOpened(@NonNull CameraDevice cameraDevice) {
-            //start camera preview here.
             mCameraDevice = cameraDevice;
-            createCameraPreviewSession();
+            //在StateCallback中创建预览
+            createCameraCaptureSession();
         }
 
         @Override
@@ -224,15 +224,16 @@ public class Camera2Helper {
         }
     };
 
-    private void createCameraPreviewSession() {
+    private void createCameraCaptureSession() {
         try {
             mSurfaceTexture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
             Surface surface = new Surface(mSurfaceTexture);
 
             mPreviewRequestBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            mPreviewRequestBuilder.addTarget(surface);
-            mPreviewRequestBuilder.addTarget(mImageReader.getSurface());
+            mPreviewRequestBuilder.addTarget(surface);   //用于预览显示
+            mPreviewRequestBuilder.addTarget(mImageReader.getSurface()); //用于图像数据处理
 
+            //创建同时支持预览显示和图像数据处理的会话，输出目标：surface、mImageReader
             mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
                     new CameraCaptureSession.StateCallback() {
                         @Override
@@ -241,17 +242,15 @@ public class Camera2Helper {
                                 return;
                             }
 
-                            // When the session is ready, we start displaying the preview.
-                            mCaptureSession = cameraCaptureSession;
+                            mCameraCaptureSession = cameraCaptureSession;
                             try {
-                                // Auto focus should be continuous for camera preview.
+                                //设置自动对焦模式：连续自动对焦（适合预览）
                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
                                         CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-                                // Flash is automatically enabled when necessary.
 
-                                // Finally, start displaying the camera preview.
+                                //启动视频预览
                                 mPreviewRequest = mPreviewRequestBuilder.build();
-                                mCaptureSession.setRepeatingRequest(mPreviewRequest,
+                                mCameraCaptureSession.setRepeatingRequest(mPreviewRequest,
                                         mCaptureCallback, mBackgroundHandler);
                             } catch (CameraAccessException e) {
                                 e.printStackTrace();
@@ -368,6 +367,7 @@ public class Camera2Helper {
         public void onCaptureCompleted(@NonNull CameraCaptureSession session,
                                        @NonNull CaptureRequest request,
                                        @NonNull TotalCaptureResult result) {
+            // 每帧捕获完成时的处理：可以在这里获取帧数据、处理对焦状态等
         }
     };
 
