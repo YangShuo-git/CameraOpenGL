@@ -83,8 +83,9 @@ public class Camera2Helper {
     public void openCamera(int width, int height,
                            SurfaceTexture surfaceTexture) throws CameraAccessException {
         mSurfaceTexture = surfaceTexture;
+        //A1、打开相机前，需要确定回调线程、配置相机输出
         startBackgroundThread();
-        setUpCameraOutputs(width, height);
+        setCameraOutputs(width, height);
 
         CameraManager manager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
         try {
@@ -94,9 +95,7 @@ public class Camera2Helper {
                     return;
                 }
             }
-            // 第一个参数指示打开哪个摄像头
-            // 第二个参数mStateCallback为相机的状态回调接口，
-            // 第三个参数用来确定Callback在哪个线程执行，为null的话就在当前线程执行
+            // mStateCallback为相机的状态回调，mBackgroundHandler是Callback执行的线程，为null就在当前线程
             manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -110,7 +109,7 @@ public class Camera2Helper {
     }
 
     @SuppressWarnings("SuspiciousNameCombination")
-    private void setUpCameraOutputs(int width, int height) {
+    private void setCameraOutputs(int width, int height) {
         CameraManager manager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
         try {
             for (String cameraId : manager.getCameraIdList()) {
@@ -121,13 +120,14 @@ public class Camera2Helper {
                 if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) {
                     continue;
                 }
-                //管理摄像头支持的所有输出格式和尺寸
-                StreamConfigurationMap map = characteristics.get(
+                mCameraId = cameraId;
+
+                //用来管理摄像头支持的所有输出格式和尺寸
+                StreamConfigurationMap streamConfigMap = characteristics.get(
                         CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-                if (map == null) {
+                if (streamConfigMap == null) {
                     continue;
                 }
-
                 //传入的期望预览尺寸
                 int rotatedPreviewWidth = width;
                 int rotatedPreviewHeight = height;
@@ -139,29 +139,27 @@ public class Camera2Helper {
 
                 //从相机支持的YUV_420_888格式中找出面积最大的尺寸
                 Size largest = Collections.max(
-                        Arrays.asList(map.getOutputSizes(ImageFormat.YUV_420_888)),
+                        Arrays.asList(streamConfigMap.getOutputSizes(ImageFormat.YUV_420_888)),
                         new CompareSizesByArea());
-
-                mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
+                //选择合适的预览尺寸
+                mPreviewSize = chooseOptimalSize(streamConfigMap.getOutputSizes(SurfaceTexture.class),
                         rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth,
                         maxPreviewHeight, largest);
-
                 if (mOnPreviewSizeListener != null) {
                     mOnPreviewSizeListener.onSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
                 }
 
-                //从相机获取未经压缩的原始图像数据，参数2表示使用双缓冲
+                //通过回调ImageReader的从相机获取未经压缩的原始图像数据，参数2表示使用双缓冲
                 //一个缓冲区用于当前图像处理，另一个缓冲区接收新的相机帧，避免处理过程中丢失帧或造成阻塞
                 mImageReader = ImageReader.newInstance(mPreviewSize.getWidth(),
                         mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 2);
                 //当有新图像可用时的处理流程：
-                //相机输出新的YUV帧
-                //ImageReader 接收到帧数据
-                //在后台线程触发 mOnImageAvailableListener
-                //在监听器中可以获取 Image 对象进行处理：
+                //相机输出新的YUV帧给到ImageReader
+                //在后台线程触发 mOnImageAvailableListener 该回调可以获取 Image 对象进行处理：
+                //该回调完成YUV420_888到标准I420的转换
                 mImageReader.setOnImageAvailableListener(mOnImageAvailableListener,
                         mBackgroundHandler);
-                mCameraId = cameraId;
+
                 return;
             }
         } catch (CameraAccessException e) {
@@ -207,7 +205,7 @@ public class Camera2Helper {
         @Override
         public void onOpened(@NonNull CameraDevice cameraDevice) {
             mCameraDevice = cameraDevice;
-            //在StateCallback中创建预览
+            //A2、在StateCallback中创建预览
             createCameraCaptureSession();
         }
 
@@ -273,13 +271,14 @@ public class Camera2Helper {
             new ImageReader.OnImageAvailableListener() {
                 @Override
                 public void onImageAvailable(ImageReader reader) {
+                    //从 ImageReader 获取最新一帧图像
                     Image image = reader.acquireNextImage();
                     if (image == null) {
                         return;
                     }
 
                     Image.Plane[] planes = image.getPlanes();
-                    int width = image.getWidth();
+                    int width  = image.getWidth();
                     int height = image.getHeight();
 
                     byte[] yBytes = new byte[width * height];
@@ -289,17 +288,14 @@ public class Camera2Helper {
 
                     for (int i = 0; i < planes.length; i++) {
                         int dstIndex = 0;
-                        int uIndex = 0;
-                        int vIndex = 0;
-                        int pixelStride = planes[i].getPixelStride();
-                        int rowStride = planes[i].getRowStride();
+                        int srcIndex = 0;
+                        int pixelStride = planes[i].getPixelStride(); //像素步长
+                        int rowStride   = planes[i].getRowStride();   //行步长
 
                         ByteBuffer buffer = planes[i].getBuffer();
-
                         byte[] bytes = new byte[buffer.capacity()];
-
                         buffer.get(bytes);
-                        int srcIndex = 0;
+
                         if (i == 0) {
                             for (int j = 0; j < height; j++) {
                                 System.arraycopy(bytes, srcIndex, yBytes, dstIndex, width);
@@ -337,8 +333,10 @@ public class Camera2Helper {
                         System.arraycopy(uBytes, 0, i420, yBytes.length, uBytes.length);
                         System.arraycopy(vBytes, 0, i420, yBytes.length + uBytes.length,
                                 vBytes.length);
+                        //完成YUV420_888到标准I420格式的转换，为后续的图像处理（裁剪、缩放等）提供了标准化的数据输入
 
                         if (mOnPreviewListener != null) {
+                            //将标准化后的I420预览帧数据传递给外部处理模块，实现了图像采集与业务逻辑的分离
                             mOnPreviewListener.onPreviewFrame(i420, i420.length);
                         }
                     }
