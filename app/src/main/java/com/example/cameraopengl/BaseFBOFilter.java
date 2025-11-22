@@ -27,7 +27,7 @@ public class BaseFBOFilter extends BaseFilter {
 
     @Override
     public void prepare(int width, int height,int x,int y) {
-        super.prepare(width, height,x,y);
+        super.prepare(width, height, x, y);
 
         loadFOB();
     }
@@ -39,21 +39,22 @@ public class BaseFBOFilter extends BaseFilter {
         //创建FrameBuffer
         mFrameBuffers = new int[1];
         GLES20.glGenFramebuffers(mFrameBuffers.length, mFrameBuffers, 0);
-        //穿件FBO中的纹理
+
+        //创建FBO中的纹理
         mFBOTextures = new int[1];
         OpenGLUtils.glGenTextures(mFBOTextures);
-
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFBOTextures[0]);
-        //指定FBO纹理的输出图像的格式 RGBA
+
+        //设置FBO纹理的输出图像的格式 RGBA  为纹理分配内存空间
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, mOutputWidth, mOutputHeight,
                 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
 
+        //将FBO绑定到2d的纹理上
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBuffers[0]);
-
-        //将fbo绑定到2d的纹理上
         GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
                 GLES20.GL_TEXTURE_2D, mFBOTextures[0], 0);
 
+        //解绑纹理和FBO，避免影响后续操作
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
     }

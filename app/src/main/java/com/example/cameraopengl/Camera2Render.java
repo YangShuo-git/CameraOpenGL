@@ -36,14 +36,15 @@ public class Camera2Render implements GLSurfaceView.Renderer, SurfaceTexture.OnF
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         mCamera2Helper = new Camera2Helper((Activity) mCameraGLView.getContext());
-        mTextures = new int[1];
+
         //创建一个纹理
+        mTextures = new int[1];
         GLES20.glGenTextures(mTextures.length, mTextures, 0);
 
         mSurfaceTexture = new SurfaceTexture(mTextures[0]);
         mSurfaceTexture.setOnFrameAvailableListener(this);
 
-        //使用fbo 将samplerExternalOES 输入到sampler2D中
+        //使用FBO 将samplerExternalOES 输入到sampler2D中
         cameraFilter = new Camera2Filter(mCameraGLView.getContext());
         //负责将图像绘制到屏幕上
         screenFilter = new Screen2Filter(mCameraGLView.getContext());

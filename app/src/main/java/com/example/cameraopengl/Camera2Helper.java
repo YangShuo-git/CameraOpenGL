@@ -95,7 +95,8 @@ public class Camera2Helper {
                     return;
                 }
             }
-            // mStateCallback为相机的状态回调，mBackgroundHandler是Callback执行的线程，为null就在当前线程
+            //A2、mStateCallback为相机的状态回调，在回调中创建预览
+            // mBackgroundHandler是Callback执行的线程，为null就在当前线程
             manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -155,8 +156,8 @@ public class Camera2Helper {
                         mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 2);
                 //当有新图像可用时的处理流程：
                 //相机输出新的YUV帧给到ImageReader
-                //在后台线程触发 mOnImageAvailableListener 该回调可以获取 Image 对象进行处理：
-                //该回调完成YUV420_888到标准I420的转换
+                //在后台线程触发 mOnImageAvailableListener
+                //该回调可以获取 Image 对象进行处理：完成YUV420_888到标准I420的转换
                 mImageReader.setOnImageAvailableListener(mOnImageAvailableListener,
                         mBackgroundHandler);
 
@@ -205,8 +206,8 @@ public class Camera2Helper {
         @Override
         public void onOpened(@NonNull CameraDevice cameraDevice) {
             mCameraDevice = cameraDevice;
-            //A2、在StateCallback中创建预览
-            createCameraCaptureSession();
+            //此时摄像头已经打开，可以预览了
+            createPreviewPipeline();
         }
 
         @Override
@@ -222,7 +223,7 @@ public class Camera2Helper {
         }
     };
 
-    private void createCameraCaptureSession() {
+    private void createPreviewPipeline() {
         try {
             mSurfaceTexture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
             Surface surface = new Surface(mSurfaceTexture);
@@ -245,6 +246,9 @@ public class Camera2Helper {
                                 //设置自动对焦模式：连续自动对焦（适合预览）
                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
                                         CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+                                //设置自动曝光
+                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
+                                        CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
 
                                 //启动视频预览
                                 mPreviewRequest = mPreviewRequestBuilder.build();
