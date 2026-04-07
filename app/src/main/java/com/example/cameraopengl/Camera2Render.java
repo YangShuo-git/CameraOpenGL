@@ -73,7 +73,7 @@ public class Camera2Render implements GLSurfaceView.Renderer, SurfaceTexture.OnF
         screenX = width - (int) (mPreviewHeight / max);
         screenY = height - (int) (mPreviewWdith / max);
 
-        //prepare 传如 绘制到屏幕上的宽 高 起始点的X坐标 起使点的Y坐标
+        //prepare 传如 绘制到屏幕上的宽 高 起始点的X坐标、Y坐标
         cameraFilter.prepare(screenSurfaceWid, screenSurfaceHeight, screenX, screenY);
         screenFilter.prepare(screenSurfaceWid, screenSurfaceHeight, screenX, screenY);
         Log.i(TAG, "onSurfaceChanged finished");

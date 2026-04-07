@@ -8,7 +8,7 @@ import android.util.AttributeSet;
 public class CameraGLView extends GLSurfaceView {
     private  CameraRender renderer;
     private  Camera2Render renderer2;
-    private GLSurfaceView glSurfaceView;
+
     public CameraGLView(Context context) {
         super(context);
     }
