@@ -6,7 +6,6 @@ import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 
 public class Camera2Filter extends BaseFBOFilter {
-
     protected float[] mMatrix;
 
     public Camera2Filter(Context mContext) {

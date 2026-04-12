@@ -33,7 +33,6 @@ public class BaseFilter {
 
         mGlVertexBuffer = ByteBuffer.allocateDirect(4 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         mGlVertexBuffer.clear();
-
         float[] VERTEXT = {
                 -1.0f, 1.0f,
                 1.0f, 1.0f,
@@ -44,7 +43,6 @@ public class BaseFilter {
 
         mGlTextureBuffer = ByteBuffer.allocateDirect(4 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         mGlTextureBuffer.clear();
-
         float[] TEXTURE = {
                 0.0f, 0.0f,
                 1.0f, 0.0f,
@@ -54,21 +52,21 @@ public class BaseFilter {
         mGlTextureBuffer.put(TEXTURE);
 
         init(mContext);
-
         resetCoordinate();
     }
 
     private void init(Context mContext) {
         //读取着色器信息
         mVertexShader = OpenGLUtils.readRawShaderFile(mContext, mVertexShaderId);
-        mFragShader = OpenGLUtils.readRawShaderFile(mContext, mFragShaderId);
+        mFragShader   = OpenGLUtils.readRawShaderFile(mContext, mFragShaderId);
         //创建着色器程序
         mProgramId = OpenGLUtils.loadProgram(mVertexShader, mFragShader);
+
         //获取着色器变量，需要赋值
         vPosition = GLES20.glGetAttribLocation(mProgramId, "vPosition");
-        vCoord = GLES20.glGetAttribLocation(mProgramId, "vCoord");
-        vMatrix = GLES20.glGetUniformLocation(mProgramId, "vMatrix");
-        vTexture = GLES20.glGetUniformLocation(mProgramId, "vTexture");
+        vCoord    = GLES20.glGetAttribLocation(mProgramId, "vCoord");
+        vMatrix   = GLES20.glGetUniformLocation(mProgramId, "vMatrix");
+        vTexture  = GLES20.glGetUniformLocation(mProgramId, "vTexture");
     }
 
     public void prepare(int width, int height, int x, int y) {
@@ -79,7 +77,6 @@ public class BaseFilter {
     }
 
     public int onDrawFrame(int textureId) {
-
         GLES20.glViewport(x, y, mOutputWidth, mOutputHeight);
 
         GLES20.glUseProgram(mProgramId);
@@ -106,7 +103,5 @@ public class BaseFilter {
         GLES20.glDeleteProgram(mProgramId);
     }
 
-    protected void resetCoordinate() {
-
-    }
+    protected void resetCoordinate() { }
 }

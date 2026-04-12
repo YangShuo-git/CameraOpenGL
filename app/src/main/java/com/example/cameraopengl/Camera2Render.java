@@ -11,16 +11,12 @@ import android.util.Log;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class Camera2Render implements GLSurfaceView.Renderer,
-        SurfaceTexture.OnFrameAvailableListener,
-        Camera2Helper.OnPreviewSizeListener,
-        Camera2Helper.OnPreviewListener {
-
+public class Camera2Render implements GLSurfaceView.Renderer {
     private static final String TAG = "Camera2Render";
     private CameraGLView mCameraGLView;
     private Camera2Helper mCamera2Helper;
-    private Screen2Filter screenFilter;
-    private Camera2Filter cameraFilter;
+    private Screen2Filter mScreen2Filter;
+    private Camera2Filter mCamera2Filter;
     private SurfaceTexture mSurfaceTexture;
     private  int[] mTextures;
     float[] mtx = new float[16];
@@ -45,19 +41,35 @@ public class Camera2Render implements GLSurfaceView.Renderer,
         mTextures = new int[1];
         GLES20.glGenTextures(mTextures.length, mTextures, 0);
         mSurfaceTexture = new SurfaceTexture(mTextures[0]);
-        mSurfaceTexture.setOnFrameAvailableListener(this);
+        mSurfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
+            @Override
+            public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+                mCameraGLView.requestRender();
+            }
+        });
 
         //使用FBO 将samplerExternalOES 输入到sampler2D中
-        cameraFilter = new Camera2Filter(mCameraGLView.getContext());
+        mCamera2Filter = new Camera2Filter(mCameraGLView.getContext());
         //负责将图像绘制到屏幕上
-        screenFilter = new Screen2Filter(mCameraGLView.getContext());
+        mScreen2Filter = new Screen2Filter(mCameraGLView.getContext());
         Log.i(TAG, "onSurfaceCreated finished");
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        mCamera2Helper.setOnPreviewListener(this);
-        mCamera2Helper.setPreviewSizeListener(this);
+        mCamera2Helper.setOnPreviewListener(new Camera2Helper.OnPreviewListener() {
+            @Override
+            public void onPreviewFrame(byte[] data, int len) {
+
+            }
+        });
+        mCamera2Helper.setPreviewSizeListener(new Camera2Helper.OnPreviewSizeListener() {
+            @Override
+            public void onSize(int width, int height) {
+                mPreviewWdith = width;
+                mPreviewHeight = height;
+            }
+        });
 
         //打开相机，传入SurfaceTexture，相机会将预览数据给到该SurfaceTexture
         //因为openCamera需要传参surfacetexture
@@ -69,17 +81,15 @@ public class Camera2Render implements GLSurfaceView.Renderer,
 
         float scaleX = (float) mPreviewHeight / (float) width;
         float scaleY = (float) mPreviewWdith / (float) height;
-
-        float max = Math.max(scaleX, scaleY);
-
-        screenSurfaceWid = (int) (mPreviewHeight / max);
+        float max    = Math.max(scaleX, scaleY);
+        screenSurfaceWid    = (int) (mPreviewHeight / max);
         screenSurfaceHeight = (int) (mPreviewWdith / max);
         screenX = width - (int) (mPreviewHeight / max);
         screenY = height - (int) (mPreviewWdith / max);
 
-        //prepare 传如 绘制到屏幕上的宽 高 起始点的X坐标、Y坐标
-        cameraFilter.prepare(screenSurfaceWid, screenSurfaceHeight, screenX, screenY);
-        screenFilter.prepare(screenSurfaceWid, screenSurfaceHeight, screenX, screenY);
+        //prepare 绘制到屏幕上的宽 高 起始点的X坐标、Y坐标
+        mCamera2Filter.prepare(screenSurfaceWid, screenSurfaceHeight, screenX, screenY);
+        mScreen2Filter.prepare(screenSurfaceWid, screenSurfaceHeight, screenX, screenY);
         Log.i(TAG, "onSurfaceChanged finished");
     }
 
@@ -102,14 +112,14 @@ public class Camera2Render implements GLSurfaceView.Renderer,
         //若不使用 getTransformMatrix 的矩阵，相机预览画面可能会出现方向错误（倒置、旋转90°）或比例失调。
         //正确应用该矩阵可保证画面与屏幕显示方向一致
         mSurfaceTexture.getTransformMatrix(mtx);
-        cameraFilter.setMatrix(mtx);
+        mCamera2Filter.setMatrix(mtx);
 
         //3、应用相机滤镜
         //输入：原始纹理 ID（mTextures[0]，包含最新的相机帧）。
-        //处理：对原始图像施加某种滤镜效果（例如颜色调整、模糊、边缘检测等）。具体效果取决于 cameraFilter 的实现（可能是自定义的 OpenGL 着色器程序）。
+        //处理：对原始图像施加某种滤镜效果（例如颜色调整、模糊、边缘检测等）。具体效果取决于 mCamera2Filter 的实现（可能是自定义的 OpenGL 着色器程序）。
         //输出：返回一个新的纹理 ID（假设为 textureId），这个纹理上存储的是经过滤镜处理后的图像。
-        //常见的滤镜链设计：cameraFilter 负责将输入纹理绘制到一个离屏的帧缓冲对象（FBO）中，并返回该 FBO 绑定的纹理 ID
-        textureId = cameraFilter.onDrawFrame(mTextures[0]);
+        //常见的滤镜链设计：mCamera2Filter 负责将输入纹理绘制到一个离屏的帧缓冲对象（FBO）中，并返回该 FBO 绑定的纹理 ID
+        textureId = mCamera2Filter.onDrawFrame(mTextures[0]);
 
         //4、屏幕渲染
         //将滤镜处理后的最终纹理（textureId）绘制到屏幕上。
@@ -117,28 +127,7 @@ public class Camera2Render implements GLSurfaceView.Renderer,
         //可选的额外处理：伽马校正、颜色空间转换、屏幕适配（如保持宽高比，黑边填充或裁剪）。
         //最后调用 eglSwapBuffers（由 GLSurfaceView 自动完成）将渲染结果显示到屏幕上。
         //注意：这里没有再次返回纹理 ID，因为不需要继续传递下去。
-        screenFilter.onDrawFrame(textureId);
-    }
-
-    //SurfaceTexture.OnFrameAvailableListener的回调方法
-    @Override
-    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-        //这里
-        mCameraGLView.requestRender();
-    }
-
-    //Camera2Helper.OnPreviewSizeListener的回调方法
-    @Override
-    public void onSize(int width, int height) {
-        mPreviewWdith = width;
-        mPreviewHeight = height;
-        Log.i(TAG, "mPreviewWdith:" + mPreviewWdith);
-        Log.i(TAG, "mPreviewHeight:" + mPreviewHeight);
-    }
-
-    //Camera2Helper.OnPreviewListener的回调方法
-    @Override
-    public void onPreviewFrame(byte[] data, int len) {
+        mScreen2Filter.onDrawFrame(textureId);
     }
 }
 
@@ -152,9 +141,9 @@ mCameraGLView.requestRender()
    ↓ (渲染线程执行 onDrawFrame)
 updateTexImage() → 获取最新帧到 mTextures[0]
 getTransformMatrix(mtx)
-cameraFilter.setMatrix(mtx)
-cameraFilter.onDrawFrame(mTextures[0]) → 输出纹理 tex1
-screenFilter.onDrawFrame(tex1) → 绘制到屏幕
+mCamera2Filter.setMatrix(mtx)
+mCamera2Filter.onDrawFrame(mTextures[0]) → 输出纹理 tex1
+mScreen2Filter.onDrawFrame(tex1) → 绘制到屏幕
    ↓
 用户看到带有滤镜的实时画面
  */

@@ -249,8 +249,6 @@ public class Camera2Helper {
                                 //设置自动曝光
                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                                         CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
-
-                                //启动视频预览
                                 mPreviewRequest = mPreviewRequestBuilder.build();
                                 mCameraCaptureSession.setRepeatingRequest(mPreviewRequest,
                                         mCaptureCallback, mBackgroundHandler);

@@ -14,18 +14,6 @@ public class BaseFBOFilter extends BaseFilter {
     }
 
     @Override
-    protected void resetCoordinate() {
-        mGlTextureBuffer.clear();
-        float[] TEXTURE = {
-                0.0f, 1.0f,
-                1.0f, 1.0f,
-                0.0f, 0.0f,
-                1.0f, 0.0f,
-        };
-        mGlTextureBuffer.put(TEXTURE);
-    }
-
-    @Override
     public void prepare(int width, int height,int x,int y) {
         super.prepare(width, height, x, y);
 
@@ -57,6 +45,18 @@ public class BaseFBOFilter extends BaseFilter {
         //解绑纹理和FBO，避免影响后续操作
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+    }
+
+    @Override
+    protected void resetCoordinate() {
+        mGlTextureBuffer.clear();
+        float[] TEXTURE = {
+                0.0f, 1.0f,
+                1.0f, 1.0f,
+                0.0f, 0.0f,
+                1.0f, 0.0f,
+        };
+        mGlTextureBuffer.put(TEXTURE);
     }
 
     public void destroyFrameBuffers() {
