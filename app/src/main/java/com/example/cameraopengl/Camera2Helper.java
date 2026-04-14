@@ -43,25 +43,28 @@ public class Camera2Helper {
     private OnPreviewListener mOnPreviewListener;
     private OnPreviewSizeListener mOnPreviewSizeListener;
 
-    public Camera2Helper(Activity context) {
-        mContext = context;
-    }
-
     private Size mPreviewSize;
 
-    private CaptureRequest.Builder mPreviewRequestBuilder;
-
     private SurfaceTexture mSurfaceTexture;
-
-    private CameraDevice mCameraDevice;
 
     private HandlerThread mBackgroundThread;
 
     private Handler mBackgroundHandler;
 
-    private CameraCaptureSession mCameraCaptureSession;
+    private CameraDevice mCameraDevice;
+
+    private CaptureRequest.Builder mPreviewRequestBuilder;
 
     private CaptureRequest mPreviewRequest;
+
+    private CameraCaptureSession mCameraCaptureSession;
+
+    private List<Surface> mOutputSurfaces;
+
+
+    public Camera2Helper(Activity context) {
+        mContext = context;
+    }
 
     public interface OnPreviewListener {
         void onPreviewFrame(byte[] data, int len);
@@ -83,7 +86,7 @@ public class Camera2Helper {
     public void openCamera(int width, int height,
                            SurfaceTexture surfaceTexture) throws CameraAccessException {
         mSurfaceTexture = surfaceTexture;
-        //A1、打开相机前，需要确定回调线程、配置相机输出
+        //A1、打开相机前，需要确定回调线程、配置相机输出(cameraId，预览尺寸，ImageReader回调等)
         startBackgroundThread();
         setCameraOutputs(width, height);
 
@@ -95,8 +98,8 @@ public class Camera2Helper {
                     return;
                 }
             }
-            //A2、mStateCallback为相机的状态回调，在回调中创建预览
-            // mBackgroundHandler是Callback执行的线程，为null就在当前线程
+            //A2、mStateCallback为相机的状态回调，在回调中创建pipeline
+            //mBackgroundHandler是Callback执行的线程，为null就在当前线程
             manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -150,17 +153,14 @@ public class Camera2Helper {
                     mOnPreviewSizeListener.onSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
                 }
 
-                //通过回调ImageReader的从相机获取未经压缩的原始图像数据，参数2表示使用双缓冲
-                //一个缓冲区用于当前图像处理，另一个缓冲区接收新的相机帧，避免处理过程中丢失帧或造成阻塞
-                mImageReader = ImageReader.newInstance(mPreviewSize.getWidth(),
-                        mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 2);
+                //2表示双缓冲，一个缓冲区用于当前图像处理，另一个缓冲区接收新的相机帧，避免处理过程中丢失帧或造成阻塞
                 //当有新图像可用时的处理流程：
-                //相机输出新的YUV帧给到ImageReader
-                //在后台线程触发 mOnImageAvailableListener
-                //该回调可以获取 Image 对象进行处理：完成YUV420_888到标准I420的转换
-                mImageReader.setOnImageAvailableListener(mOnImageAvailableListener,
-                        mBackgroundHandler);
-
+                //相机输出新的YUV帧给到ImageReader，在后台线程触发 mOnImageAvailableListener
+                //该回调可以获取原始图像数据 Image 对象进行处理：完成YUV420_888到标准I420的转换
+                mImageReader = ImageReader.newInstance(
+                        mPreviewSize.getWidth(), mPreviewSize.getHeight(),
+                        ImageFormat.YUV_420_888, 2);
+                mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, mBackgroundHandler);
                 return;
             }
         } catch (CameraAccessException e) {
@@ -169,44 +169,11 @@ public class Camera2Helper {
         }
     }
 
-    private static Size chooseOptimalSize(Size[] choices, int textureViewWidth,
-                                          int textureViewHeight, int maxWidth, int maxHeight, Size aspectRatio) {
-
-        // Collect the supported resolutions that are at least as big as the preview Surface
-        List<Size> bigEnough = new ArrayList<>();
-        // Collect the supported resolutions that are smaller than the preview Surface
-        List<Size> notBigEnough = new ArrayList<>();
-        int w = aspectRatio.getWidth();
-        int h = aspectRatio.getHeight();
-        for (Size option : choices) {
-            if (option.getWidth() <= maxWidth && option.getHeight() <= maxHeight &&
-                    option.getHeight() == option.getWidth() * h / w) {
-                if (option.getWidth() >= textureViewWidth &&
-                        option.getHeight() >= textureViewHeight) {
-                    bigEnough.add(option);
-                } else {
-                    notBigEnough.add(option);
-                }
-            }
-        }
-
-        // Pick the smallest of those big enough. If there is no one big enough, pick the
-        // largest of those not big enough.
-        if (bigEnough.size() > 0) {
-            return Collections.min(bigEnough, new CompareSizesByArea());
-        } else if (notBigEnough.size() > 0) {
-            return Collections.max(notBigEnough, new CompareSizesByArea());
-        } else {
-            Log.e("Camera2Helper", "Couldn't find any suitable preview size");
-            return choices[0];
-        }
-    }
-
     private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
         @Override
         public void onOpened(@NonNull CameraDevice cameraDevice) {
             mCameraDevice = cameraDevice;
-            //此时摄像头已经打开，可以预览了
+            //此时摄像头已经打开，可以创建pipeline
             createPreviewPipeline();
         }
 
@@ -229,45 +196,43 @@ public class Camera2Helper {
             Surface surface = new Surface(mSurfaceTexture);
 
             mPreviewRequestBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            mPreviewRequestBuilder.addTarget(surface);   //用于预览显示
+            mPreviewRequestBuilder.addTarget(surface); //用于预览显示
             mPreviewRequestBuilder.addTarget(mImageReader.getSurface()); //用于图像数据处理
-
+            mOutputSurfaces = Arrays.asList(surface, mImageReader.getSurface());
             //创建同时支持预览显示和图像数据处理的会话，输出目标：surface、mImageReader
-            mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
-                    new CameraCaptureSession.StateCallback() {
-                        @Override
-                        public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
-                            if (null == mCameraDevice) {
-                                return;
-                            }
-
-                            mCameraCaptureSession = cameraCaptureSession;
-                            try {
-                                //设置自动对焦模式：连续自动对焦（适合预览）
-                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
-                                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-                                //设置自动曝光
-                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
-                                        CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
-                                mPreviewRequest = mPreviewRequestBuilder.build();
-                                mCameraCaptureSession.setRepeatingRequest(mPreviewRequest,
-                                        mCaptureCallback, mBackgroundHandler);
-                            } catch (CameraAccessException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        @Override
-                        public void onConfigureFailed(
-                                @NonNull CameraCaptureSession cameraCaptureSession) {
-                            Log.e(TAG, "onConfigureFailed: ");
-                        }
-                    }, null
-            );
+            mCameraDevice.createCaptureSession(mOutputSurfaces, mSessionStateCallback, mBackgroundHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
-    }
+    };
+
+    private final CameraCaptureSession.StateCallback mSessionStateCallback =
+            new CameraCaptureSession.StateCallback() {
+        @Override
+        public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
+            if (null == mCameraDevice) { return;}
+
+            mCameraCaptureSession = cameraCaptureSession;
+            try {
+                //设置自动对焦模式：连续自动对焦（适合预览）
+                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
+                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+                //设置自动曝光
+                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
+                        CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
+                mPreviewRequest = mPreviewRequestBuilder.build();
+                mCameraCaptureSession.setRepeatingRequest(mPreviewRequest,
+                        mCaptureCallback, mBackgroundHandler);
+            } catch (CameraAccessException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
+            Log.e(TAG, "onConfigureFailed: ");
+        }
+    };
 
     private ImageReader.OnImageAvailableListener mOnImageAvailableListener =
             new ImageReader.OnImageAvailableListener() {
@@ -346,15 +311,6 @@ public class Camera2Helper {
                 }
             };
 
-    static class CompareSizesByArea implements Comparator<Size> {
-        @Override
-        public int compare(Size lhs, Size rhs) {
-            // We cast here to ensure the multiplications won't overflow
-            return Long.signum((long) lhs.getWidth() * lhs.getHeight() -
-                    (long) rhs.getWidth() * rhs.getHeight());
-        }
-    }
-
     private CameraCaptureSession.CaptureCallback mCaptureCallback
             = new CameraCaptureSession.CaptureCallback() {
         @Override
@@ -371,5 +327,46 @@ public class Camera2Helper {
         }
     };
 
+    static class CompareSizesByArea implements Comparator<Size> {
+        @Override
+        public int compare(Size lhs, Size rhs) {
+            // We cast here to ensure the multiplications won't overflow
+            return Long.signum((long) lhs.getWidth() * lhs.getHeight() -
+                    (long) rhs.getWidth() * rhs.getHeight());
+        }
+    }
+
+    private static Size chooseOptimalSize(Size[] choices, int textureViewWidth,
+                                          int textureViewHeight, int maxWidth, int maxHeight, Size aspectRatio) {
+
+        // Collect the supported resolutions that are at least as big as the preview Surface
+        List<Size> bigEnough = new ArrayList<>();
+        // Collect the supported resolutions that are smaller than the preview Surface
+        List<Size> notBigEnough = new ArrayList<>();
+        int w = aspectRatio.getWidth();
+        int h = aspectRatio.getHeight();
+        for (Size option : choices) {
+            if (option.getWidth() <= maxWidth && option.getHeight() <= maxHeight &&
+                    option.getHeight() == option.getWidth() * h / w) {
+                if (option.getWidth() >= textureViewWidth &&
+                        option.getHeight() >= textureViewHeight) {
+                    bigEnough.add(option);
+                } else {
+                    notBigEnough.add(option);
+                }
+            }
+        }
+
+        // Pick the smallest of those big enough. If there is no one big enough, pick the
+        // largest of those not big enough.
+        if (bigEnough.size() > 0) {
+            return Collections.min(bigEnough, new CompareSizesByArea());
+        } else if (notBigEnough.size() > 0) {
+            return Collections.max(notBigEnough, new CompareSizesByArea());
+        } else {
+            Log.e("Camera2Helper", "Couldn't find any suitable preview size");
+            return choices[0];
+        }
+    }
 }
 

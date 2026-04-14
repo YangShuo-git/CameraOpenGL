@@ -50,7 +50,7 @@ public class Camera2Render implements GLSurfaceView.Renderer {
 
         //使用FBO 将samplerExternalOES 输入到sampler2D中
         mCamera2Filter = new Camera2Filter(mCameraGLView.getContext());
-        //负责将图像绘制到屏幕上
+        //将图像绘制到屏幕上
         mScreen2Filter = new Screen2Filter(mCameraGLView.getContext());
         Log.i(TAG, "onSurfaceCreated finished");
     }
@@ -115,9 +115,9 @@ public class Camera2Render implements GLSurfaceView.Renderer {
         mCamera2Filter.setMatrix(mtx);
 
         //3、应用相机滤镜
-        //输入：原始纹理 ID（mTextures[0]，包含最新的相机帧）。
+        //输入：原始纹理id（mTextures[0]，包含最新的相机帧）。
         //处理：对原始图像施加某种滤镜效果（例如颜色调整、模糊、边缘检测等）。具体效果取决于 mCamera2Filter 的实现（可能是自定义的 OpenGL 着色器程序）。
-        //输出：返回一个新的纹理 ID（假设为 textureId），这个纹理上存储的是经过滤镜处理后的图像。
+        //输出：返回一个新的纹理id（textureId），这个纹理上存储的是经过滤镜处理后的图像。
         //常见的滤镜链设计：mCamera2Filter 负责将输入纹理绘制到一个离屏的帧缓冲对象（FBO）中，并返回该 FBO 绑定的纹理 ID
         textureId = mCamera2Filter.onDrawFrame(mTextures[0]);
 
