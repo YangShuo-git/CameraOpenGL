@@ -83,29 +83,6 @@ public class Camera2Helper {
     }
 
 
-    public void openCamera(int width, int height,
-                           SurfaceTexture surfaceTexture) throws CameraAccessException {
-        mSurfaceTexture = surfaceTexture;
-        //A1、打开相机前，需要确定回调线程、配置相机输出(cameraId，预览尺寸，ImageReader回调等)
-        startBackgroundThread();
-        setCameraOutputs(width, height);
-
-        CameraManager manager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (mContext.checkSelfPermission(Manifest.permission.CAMERA) !=
-                        PackageManager.PERMISSION_GRANTED) {
-                    return;
-                }
-            }
-            //A2、mStateCallback为相机的状态回调，在回调中创建pipeline
-            //mBackgroundHandler是Callback执行的线程，为null就在当前线程
-            manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-    }
-
     private void startBackgroundThread() {
         mBackgroundThread = new HandlerThread("CameraBackground");
         mBackgroundThread.start();
@@ -166,6 +143,30 @@ public class Camera2Helper {
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void openCamera(int width, int height,
+                           SurfaceTexture surfaceTexture) throws CameraAccessException {
+        mSurfaceTexture = surfaceTexture;
+        //A1、打开相机前，需要确定回调线程、配置相机输出(cameraId，预览尺寸，ImageReader回调等)
+        startBackgroundThread();
+        setCameraOutputs(width, height);
+
+        CameraManager manager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (mContext.checkSelfPermission(Manifest.permission.CAMERA) !=
+                        PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+            }
+            //A2、mStateCallback为相机的状态回调，在回调中创建pipeline
+            //mBackgroundHandler是Callback执行的线程，为null就在当前线程
+            manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
         }
     }
 
