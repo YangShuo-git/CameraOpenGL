@@ -8,12 +8,12 @@ import android.opengl.GLES20;
 public class Camera2Filter extends BaseFBOFilter {
     protected float[] mMatrix;
 
-    public Camera2Filter(Context mContext) {
-        super(mContext, R.raw.camera_vert, R.raw.camera_frag);
+    public Camera2Filter(Context mContext, int vertexShaderId, int fragShaderId) {
+        super(mContext, vertexShaderId, fragShaderId);
     }
 
-    public Camera2Filter(Context mContext, int mVertexShaderId, int mFragShaderId) {
-        super(mContext, mVertexShaderId, mFragShaderId);
+    public Camera2Filter(Context mContext) {
+        super(mContext, R.raw.camera_vert, R.raw.camera_frag);
     }
 
     @Override
@@ -27,12 +27,10 @@ public class Camera2Filter extends BaseFBOFilter {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBuffers[0]);
         GLES20.glUseProgram(mProgramId);
 
-        //赋值vPosition
         mGlVertexBuffer.position(0);
         GLES20.glVertexAttribPointer(vPosition, 2, GLES20.GL_FLOAT, false, 0, mGlVertexBuffer);
         GLES20.glEnableVertexAttribArray(vPosition);
 
-        //赋值vCoord
         mGlTextureBuffer.position(0);
         GLES20.glVertexAttribPointer(vCoord, 2, GLES20.GL_FLOAT, false, 0, mGlTextureBuffer);
         GLES20.glEnableVertexAttribArray(vCoord);
@@ -40,8 +38,8 @@ public class Camera2Filter extends BaseFBOFilter {
         //赋值vMatrix
         GLES20.glUniformMatrix4fv(vMatrix, 1, false, mMatrix, 0);
 
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         //SurfaceTexture 对应 GL_TEXTURE_EXTERNAL_OES 类型
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId);
 
         //赋值vTexture

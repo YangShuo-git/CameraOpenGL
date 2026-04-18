@@ -30,7 +30,7 @@ public class BaseFBOFilter extends BaseFilter {
 
         //创建FBO中的纹理
         mFBOTextures = new int[1];
-        OpenGLUtils.glGenTextures(mFBOTextures);
+        OpenGLUtils.genTextures(mFBOTextures);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFBOTextures[0]);
 
         //设置FBO纹理的输出图像的格式 RGBA  为纹理分配内存空间

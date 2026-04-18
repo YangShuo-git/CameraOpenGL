@@ -129,15 +129,6 @@ public class Camera2Helper {
                 if (mOnPreviewSizeListener != null) {
                     mOnPreviewSizeListener.onSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
                 }
-
-                //2表示双缓冲，一个缓冲区用于当前图像处理，另一个缓冲区接收新的相机帧，避免处理过程中丢失帧或造成阻塞
-                //当有新图像可用时的处理流程：
-                //相机输出新的YUV帧给到ImageReader，在后台线程触发 mOnImageAvailableListener
-                //该回调可以获取原始图像数据 Image 对象进行处理：完成YUV420_888到标准I420的转换
-                mImageReader = ImageReader.newInstance(
-                        mPreviewSize.getWidth(), mPreviewSize.getHeight(),
-                        ImageFormat.YUV_420_888, 2);
-                mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, mBackgroundHandler);
                 return;
             }
         } catch (CameraAccessException e) {
@@ -150,7 +141,7 @@ public class Camera2Helper {
     public void openCamera(int width, int height,
                            SurfaceTexture surfaceTexture) throws CameraAccessException {
         mSurfaceTexture = surfaceTexture;
-        //A1、打开相机前，需要确定回调线程、配置相机输出(cameraId，预览尺寸，ImageReader回调等)
+        //A1、打开相机前，需要确定回调线程、配置相机输出参数(cameraId，预览尺寸等)
         startBackgroundThread();
         setCameraOutputs(width, height);
 
@@ -195,12 +186,20 @@ public class Camera2Helper {
         try {
             mSurfaceTexture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
             Surface surface = new Surface(mSurfaceTexture);
+            //2表示双缓冲，一个缓冲区用于当前图像处理，另一个缓冲区接收新的相机帧，避免处理过程中丢失帧或造成阻塞
+            //当有新图像可用时的处理流程：
+            //相机输出新的YUV帧给到ImageReader，在后台线程触发 mOnImageAvailableListener
+            //该回调可以获取原始图像数据 Image 对象进行处理：完成YUV420_888到标准I420的转换
+            mImageReader = ImageReader.newInstance(
+                    mPreviewSize.getWidth(), mPreviewSize.getHeight(),
+                    ImageFormat.YUV_420_888, 2);
+            mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, mBackgroundHandler);
 
+            //创建同时支持预览显示和图像数据处理的会话，输出目标：surface、mImageReader
             mPreviewRequestBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             mPreviewRequestBuilder.addTarget(surface); //用于预览显示
             mPreviewRequestBuilder.addTarget(mImageReader.getSurface()); //用于图像数据处理
             mOutputSurfaces = Arrays.asList(surface, mImageReader.getSurface());
-            //创建同时支持预览显示和图像数据处理的会话，输出目标：surface、mImageReader
             mCameraDevice.createCaptureSession(mOutputSurfaces, mSessionStateCallback, mBackgroundHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -241,9 +240,7 @@ public class Camera2Helper {
                 public void onImageAvailable(ImageReader reader) {
                     //从 ImageReader 获取最新一帧图像
                     Image image = reader.acquireNextImage();
-                    if (image == null) {
-                        return;
-                    }
+                    if (image == null) {return;}
 
                     Image.Plane[] planes = image.getPlanes();
                     int width  = image.getWidth();
@@ -304,7 +301,7 @@ public class Camera2Helper {
                         //完成YUV420_888到标准I420格式的转换，为后续的图像处理（裁剪、缩放等）提供了标准化的数据输入
 
                         if (mOnPreviewListener != null) {
-                            //将标准化后的I420预览帧数据传递给外部处理模块，实现了图像采集与业务逻辑的分离
+                            //将标准化后的I420预览帧数据通过回调传递给外部处理模块，实现了图像采集与业务逻辑的分离
                             mOnPreviewListener.onPreviewFrame(i420, i420.length);
                         }
                     }
@@ -337,9 +334,9 @@ public class Camera2Helper {
         }
     }
 
-    private static Size chooseOptimalSize(Size[] choices, int textureViewWidth,
-                                          int textureViewHeight, int maxWidth, int maxHeight, Size aspectRatio) {
-
+    private static Size chooseOptimalSize(Size[] choices,
+                                          int textureViewWidth, int textureViewHeight,
+                                          int maxWidth, int maxHeight, Size aspectRatio) {
         // Collect the supported resolutions that are at least as big as the preview Surface
         List<Size> bigEnough = new ArrayList<>();
         // Collect the supported resolutions that are smaller than the preview Surface
@@ -370,4 +367,3 @@ public class Camera2Helper {
         }
     }
 }
-

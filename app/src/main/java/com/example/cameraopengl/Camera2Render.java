@@ -72,7 +72,6 @@ public class Camera2Render implements GLSurfaceView.Renderer {
         });
 
         //打开相机，传入SurfaceTexture，相机会将预览数据给到该SurfaceTexture
-        //因为openCamera需要传参surfacetexture
         try {
             mCamera2Helper.openCamera(width, height, mSurfaceTexture);
         } catch (CameraAccessException e) {
@@ -104,7 +103,7 @@ public class Camera2Render implements GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         //2、获取最新图像帧并更新纹理
-        //从SurfaceTexture内部队列中取出最新的一帧图像数据，
+        //先从SurfaceTexture内部队列中取出最新的一帧图像数据，
         //并更新到SurfaceTexture绑定的 OpenGL 纹理（即 mTextures[0]）上
         //这一步是将相机采集到的实时图像“贴”到 GPU 纹理中的关键操作
         mSurfaceTexture.updateTexImage();
@@ -132,7 +131,9 @@ public class Camera2Render implements GLSurfaceView.Renderer {
 }
 
 /*
-驱动方式：SurfaceTexture.OnFrameAvailableListener 监听到新帧后，触发 GLSurfaceView 的渲染请求，在 onDrawFrame 中完成一帧的更新和处理。
+驱动方式：
+SurfaceTexture.OnFrameAvailableListener 监听到新帧后，触发 GLSurfaceView 的渲染请求，在 onDrawFrame 中完成一帧的更新和处理。
+
 相机硬件
    ↓ (图像流)
 SurfaceTexture (内部自动更新纹理 mTextures[0])

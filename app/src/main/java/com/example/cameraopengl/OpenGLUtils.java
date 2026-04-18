@@ -66,7 +66,7 @@ public class OpenGLUtils {
         return programeId;
     }
 
-    public static void glGenTextures(int[] textures) {
+    public static void genTextures(int[] textures) {
         GLES20.glGenTextures(textures.length, textures, 0);
 
         for (int i = 0; i < textures.length; i++) {
