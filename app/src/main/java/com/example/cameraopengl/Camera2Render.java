@@ -95,7 +95,6 @@ public class Camera2Render implements GLSurfaceView.Renderer {
     //每次渲染一帧都会被调用
     @Override
     public void onDrawFrame(GL10 gl) {
-        int textureId;
         //1、清理屏幕
         //glClearColor告诉opengl需要把屏幕清理成什么颜色
         //glClear 实际执行清除操作，将颜色缓冲区（即屏幕显示内容）填充为上述颜色，避免上一帧的残留
@@ -103,8 +102,8 @@ public class Camera2Render implements GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         //2、获取最新图像帧并更新纹理
-        //先从SurfaceTexture内部队列中取出最新的一帧图像数据，
-        //并更新到SurfaceTexture绑定的 OpenGL 纹理（即 mTextures[0]）上
+        //从SurfaceTexture内部队列中取出最新的一帧图像数据，
+        //更新到SurfaceTexture绑定的 OpenGL 纹理（即 mTextures[0]）上
         //这一步是将相机采集到的实时图像“贴”到 GPU 纹理中的关键操作
         mSurfaceTexture.updateTexImage();
 
@@ -118,7 +117,7 @@ public class Camera2Render implements GLSurfaceView.Renderer {
         //处理：对原始图像施加某种滤镜效果（例如颜色调整、模糊、边缘检测等）。具体效果取决于 mCamera2Filter 的实现（可能是自定义的 OpenGL 着色器程序）。
         //输出：返回一个新的纹理id（textureId），这个纹理上存储的是经过滤镜处理后的图像。
         //常见的滤镜链设计：mCamera2Filter 负责将输入纹理绘制到一个离屏的帧缓冲对象（FBO）中，并返回该 FBO 绑定的纹理 ID
-        textureId = mCamera2Filter.onDrawFrame(mTextures[0]);
+        int textureId = mCamera2Filter.onDrawFrame(mTextures[0]);
 
         //4、屏幕渲染
         //将滤镜处理后的最终纹理（textureId）绘制到屏幕上。

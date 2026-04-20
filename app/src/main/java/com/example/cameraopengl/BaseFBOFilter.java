@@ -17,10 +17,10 @@ public class BaseFBOFilter extends BaseFilter {
     public void prepare(int width, int height,int x,int y) {
         super.prepare(width, height, x, y);
 
-        loadFOB();
+        loadFBO();
     }
 
-    private void loadFOB() {
+    private void loadFBO() {
         if (mFrameBuffers != null) {
             destroyFrameBuffers();
         }
@@ -32,7 +32,6 @@ public class BaseFBOFilter extends BaseFilter {
         mFBOTextures = new int[1];
         OpenGLUtils.genTextures(mFBOTextures);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFBOTextures[0]);
-
         //设置FBO纹理的输出图像的格式 RGBA  为纹理分配内存空间
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, mOutputWidth, mOutputHeight,
                 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
