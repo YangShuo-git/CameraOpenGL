@@ -21,13 +21,13 @@ public class Camera2Render implements GLSurfaceView.Renderer {
     private  int[] mTextures;
     float[] mtx = new float[16];
 
-    private int mPreviewWdith;
+    private int mPreviewWidth;
     private int mPreviewHeight;
 
-    private int screenSurfaceWid;
-    private int screenSurfaceHeight;
-    private int screenX;
-    private int screenY;
+    private int mScreenSurfaceWidth;
+    private int mScreenSurfaceHeight;
+    private int mScreenX;
+    private int mScreenY;
     public Camera2Render(CameraGLView cameraGLView) {
         mCameraGLView = cameraGLView;
     }
@@ -37,13 +37,14 @@ public class Camera2Render implements GLSurfaceView.Renderer {
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         mCamera2Helper = new Camera2Helper((Activity) mCameraGLView.getContext());
 
-        //创建纹理 用于连接camera和opengl
+        //创建opengl纹理 用于创建SurfaceTexture 并连接Camera
         mTextures = new int[1];
         GLES20.glGenTextures(mTextures.length, mTextures, 0);
         mSurfaceTexture = new SurfaceTexture(mTextures[0]);
         mSurfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
             @Override
             public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+                //surfacetexture 渲染的起点，下一步是GLSurfaceView.Renderer的回调onDrawFrame()
                 mCameraGLView.requestRender();
             }
         });
@@ -66,7 +67,7 @@ public class Camera2Render implements GLSurfaceView.Renderer {
         mCamera2Helper.setPreviewSizeListener(new Camera2Helper.OnPreviewSizeListener() {
             @Override
             public void onSize(int width, int height) {
-                mPreviewWdith = width;
+                mPreviewWidth = width;
                 mPreviewHeight = height;
             }
         });
@@ -79,16 +80,16 @@ public class Camera2Render implements GLSurfaceView.Renderer {
         }
 
         float scaleX = (float) mPreviewHeight / (float) width;
-        float scaleY = (float) mPreviewWdith / (float) height;
+        float scaleY = (float) mPreviewWidth / (float) height;
         float max    = Math.max(scaleX, scaleY);
-        screenSurfaceWid    = (int) (mPreviewHeight / max);
-        screenSurfaceHeight = (int) (mPreviewWdith / max);
-        screenX = width - (int) (mPreviewHeight / max);
-        screenY = height - (int) (mPreviewWdith / max);
+        mScreenSurfaceWidth  = (int) (mPreviewHeight / max);
+        mScreenSurfaceHeight = (int) (mPreviewWidth / max);
+        mScreenX = width - (int) (mPreviewHeight / max);
+        mScreenY = height - (int) (mPreviewWidth / max);
 
         //prepare 绘制到屏幕上的宽 高 起始点的X坐标、Y坐标
-        mCamera2Filter.prepare(screenSurfaceWid, screenSurfaceHeight, screenX, screenY);
-        mScreen2Filter.prepare(screenSurfaceWid, screenSurfaceHeight, screenX, screenY);
+        mCamera2Filter.prepare(mScreenSurfaceWidth, mScreenSurfaceHeight, mScreenX, mScreenY);
+        mScreen2Filter.prepare(mScreenSurfaceWidth, mScreenSurfaceHeight, mScreenX, mScreenY);
         Log.i(TAG, "onSurfaceChanged finished");
     }
 
@@ -135,15 +136,15 @@ SurfaceTexture.OnFrameAvailableListener 监听到新帧后，触发 GLSurfaceVie
 
 相机硬件
    ↓ (图像流)
-SurfaceTexture (内部自动更新纹理 mTextures[0])
+SurfaceTexture (绑定了opengl纹理 mTextures[0]，后续会自动更新)
    ↓ (onFrameAvailable 触发)
 mCameraGLView.requestRender()
    ↓ (渲染线程执行 onDrawFrame)
-updateTexImage() → 获取最新帧到 mTextures[0]
+updateTexImage() → 更新帧到 mTextures[0]
 getTransformMatrix(mtx)
 mCamera2Filter.setMatrix(mtx)
-mCamera2Filter.onDrawFrame(mTextures[0]) → 输出纹理 tex1
-mScreen2Filter.onDrawFrame(tex1) → 绘制到屏幕
+mCamera2Filter.onDrawFrame(mTextures[0]) → 输出纹理 textureId
+mScreen2Filter.onDrawFrame(textureId) → 绘制到屏幕
    ↓
 用户看到带有滤镜的实时画面
  */

@@ -68,39 +68,17 @@ public class OpenGLUtils {
 
     public static void genTextures(int[] textures) {
         GLES20.glGenTextures(textures.length, textures, 0);
-
         for (int i = 0; i < textures.length; i++) {
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[i]);
 
+            //设置纹理放大/缩小过滤器为最近邻插值（NEAREST）像素化效果，性能好
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-
-
+            //设置纹理环绕模式为重复环绕(REPEAT) 纹理在超出[0,1]范围时重复平铺
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_REPEAT);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_REPEAT);
 
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
-        }
-    }
-
-
-    public static void copyAssets2SdCard(Context context, String src, String dst) {
-        try {
-
-            File file = new File(dst);
-            if (!file.exists()) {
-                InputStream is = context.getAssets().open(src);
-                FileOutputStream fos = new FileOutputStream(file);
-                int len;
-                byte[] buffer = new byte[2048];
-                while ((len = is.read(buffer)) != -1) {
-                    fos.write(buffer, 0, len);
-                }
-                is.close();
-                fos.close();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 }
